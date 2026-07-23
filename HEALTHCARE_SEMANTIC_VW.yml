@@ -1,0 +1,738 @@
+name: HEALTHCARE_SEMANTIC_VW
+tables:
+  - name: INSURANCE_CLAIMS
+    synonyms:
+      - benefit claims
+      - claim ledger
+      - claim log
+      - claim records
+      - claim registry
+      - claim submissions
+      - coverage claims
+      - health claims
+      - indemnity claims
+      - insurance claims
+      - insurance filings
+      - insurance requests
+      - medical claims
+      - policy claims
+      - reimbursement claims
+    description: The table contains records of healthcare insurance claims. Each record represents a single claim and includes details about the associated admission and insurance policy, along with financial details such as claimed and approved amounts, claim status, and relevant dates for submission and settlement.
+    base_table:
+      database: HEALTHCARE_DB
+      schema: RAW
+      table: INSURANCE_CLAIMS
+    dimensions:
+      - name: ADMISSION_ID
+        synonyms:
+          - admission_reference
+          - check_in_id
+          - entry_id
+          - hospital_entry_id
+          - intake_id
+          - patient_admission_number
+          - registration_id
+          - visit_id
+        description: Unique identifier for a patient admission associated with an insurance claim.
+        expr: ADMISSION_ID
+        data_type: NUMBER(10,0)
+        sample_values:
+          - '138059'
+          - '142129'
+          - '106756'
+      - name: CLAIM_ID
+        synonyms:
+          - claim_code
+          - claim_identifier
+          - claim_key
+          - claim_number
+          - claim_record_id
+          - claim_reference
+          - claim_tracking_number
+          - insurance_claim_id
+        description: Unique identifier assigned to each insurance claim.
+        expr: CLAIM_ID
+        data_type: NUMBER(10,0)
+        sample_values:
+          - '900083'
+          - '900014'
+          - '900013'
+      - name: CLAIM_STATUS
+        synonyms:
+          - claim_condition
+          - claim_disposition
+          - claim_outcome
+          - claim_phase
+          - claim_progress
+          - claim_result
+          - claim_situation
+          - claim_stage
+          - claim_standing
+          - claim_state
+        description: The current status of an insurance claim.
+        expr: CLAIM_STATUS
+        data_type: VARCHAR(1)
+        sample_values:
+          - A
+          - R
+          - P
+      - name: INSURANCE_ID
+        synonyms:
+          - carrier_id
+          - coverage_code
+          - coverage_id
+          - insurance_code
+          - insurance_plan_id
+          - insurance_policy_number
+          - insurer_id
+          - plan_id
+          - policy_id
+          - policy_number
+        description: Unique identifier assigned to each insurance record.
+        expr: INSURANCE_ID
+        data_type: VARCHAR(5)
+        sample_values:
+          - I10
+          - I15
+          - I09
+    time_dimensions:
+      - name: CLAIM_DATE
+        description: The date on which an insurance claim was submitted.
+        expr: CLAIM_DATE
+        data_type: DATE
+        sample_values:
+          - '2024-11-03'
+          - '2025-01-08'
+          - '2023-06-27'
+      - name: SETTLE_DATE
+        description: The date on which an insurance claim was settled.
+        expr: SETTLE_DATE
+        data_type: DATE
+        sample_values:
+          - '2023-04-12'
+          - '2024-11-20'
+          - '2023-12-21'
+    facts:
+      - name: APPROVED_AMOUNT
+        description: The monetary amount approved for an insurance claim.
+        expr: APPROVED_AMOUNT
+        data_type: NUMBER(12,2)
+        access_modifier: public_access
+        sample_values:
+          - '34418.00'
+          - '47008.00'
+          - '25192.00'
+      - name: CLAIM_AMOUNT
+        description: The total monetary amount associated with an insurance claim.
+        expr: CLAIM_AMOUNT
+        data_type: NUMBER(12,2)
+        access_modifier: public_access
+        sample_values:
+          - '102229.00'
+          - '35406.00'
+          - '125058.00'
+    metrics:
+      - name: DISTINCT_ADMISSION_ID
+        description: Calculates the count of unique patient admissions associated with insurance claims. Use when questions ask about 'how many unique admissions have claims', 'distinct admissions with insurance', or 'number of admissions covered by insurance'. Helps assess the breadth of insurance claim coverage across patient admissions and avoid double-counting admissions with multiple claim records.
+        expr: COUNT(DISTINCT admission_id)
+        access_modifier: public_access
+      - name: EARLIEST_CLAIM_DATE
+        synonyms:
+          - first_claim_date
+          - min_claim_date
+        expr: MIN(claim_date)
+        access_modifier: public_access
+      - name: MAX_CLAIM_DATE
+        synonyms:
+          - end_claim_date
+          - last_claim_date
+          - latest_claim_date
+          - recent_claim_date
+        expr: MAX(claim_date)
+        access_modifier: public_access
+      - name: NUM_CLAIMS
+        description: Calculates the total count of insurance claim records. Use when questions ask about 'number of claims', 'claim volume', 'how many claims were filed', or 'claim counts by quarter, insurer, or time period'. Helps analyze insurance claim activity, track claim volumes over time, and compare claim frequencies across departments, insurers, or admission types.
+        expr: COUNT(claim_id)
+        access_modifier: public_access
+      - name: TOTAL_APPROVED_AMOUNT
+        description: Calculates the total monetary amount approved across insurance claims. Use when questions ask about 'total approved amount', 'how much was approved by insurance', 'approved claim value', or 'insurance payout totals'. Helps evaluate the financial impact of insurance approvals, compare approved amounts against claimed amounts, and analyze reimbursement trends across insurers, departments, or time periods.
+        expr: SUM(approved_amount)
+        access_modifier: public_access
+      - name: TOTAL_CLAIM_AMOUNT
+        synonyms:
+          - final_claim_amount
+        description: Calculates the total monetary amount claimed across all insurance claim records. Use when questions ask about 'total claim amount', 'how much was claimed', 'sum of claims', or 'claim value by quarter or period'. Helps evaluate the overall financial exposure of insurance claims, compare claimed amounts against approved amounts, and analyze claim value trends across time periods, insurers, or departments.
+        expr: SUM(claim_amount)
+        access_modifier: public_access
+    primary_key:
+      columns:
+        - ADMISSION_ID
+  - name: PATIENT_ADMISSIONS
+    description: The table contains records of patient hospital admissions. Each record represents a single admission event and includes details about the associated patient, doctor, and hospital, as well as clinical information such as department, admission type, diagnosis, and length of stay.
+    base_table:
+      database: HEALTHCARE_DB
+      schema: RAW
+      table: PATIENT_ADMISSIONS
+    dimensions:
+      - name: ADMISSION_ID
+        synonyms:
+          - admission_number
+          - encounter_id
+          - entry_id
+          - hospital_admission_number
+          - hospitalization_id
+          - inpatient_id
+          - intake_id
+          - patient_entry_id
+          - registration_id
+          - visit_id
+        description: Unique identifier assigned to each patient admission record.
+        expr: ADMISSION_ID
+        data_type: NUMBER(10,0)
+        sample_values:
+          - '100017'
+          - '100043'
+          - '100003'
+      - name: ADMISSION_TYPE
+        synonyms:
+          - admission_category
+          - admission_class
+          - entry_type
+          - hospital_admission_category
+          - hospitalization_type
+          - inpatient_classification
+          - intake_category
+          - patient_entry_type
+          - type_of_admission
+          - visit_classification
+        description: The type of admission for a patient.
+        expr: ADMISSION_TYPE
+        data_type: VARCHAR(5)
+        sample_values:
+          - URG
+          - ELC
+          - EMG
+      - name: DEPARTMENT
+        synonyms:
+          - care_unit
+          - clinical_area
+          - division
+          - hospital_division
+          - medical_unit
+          - section
+          - service_area
+          - specialty
+          - unit
+          - ward
+        description: The abbreviated code representing the hospital department to which a patient was admitted.
+        expr: DEPARTMENT
+        data_type: VARCHAR(20)
+        sample_values:
+          - ONCO
+          - NEPH
+          - PEDI
+      - name: DIAGNOSIS_CODE
+        synonyms:
+          - clinical_code
+          - condition_code
+          - diagnostic_identifier
+          - disease_code
+          - health_condition_code
+          - icd_code
+          - illness_code
+          - medical_code
+          - medical_diagnosis_identifier
+          - patient_diagnosis_code
+        description: Medical diagnosis codes used to classify and identify a patient's condition or disease.
+        expr: DIAGNOSIS_CODE
+        data_type: VARCHAR(10)
+        sample_values:
+          - R07
+          - I63
+          - I50
+      - name: DOCTOR_ID
+        description: Unique identifier assigned to each doctor.
+        expr: DOCTOR_ID
+        data_type: VARCHAR(5)
+        sample_values:
+          - D087
+          - D155
+          - D025
+      - name: HOSPITAL_ID
+        synonyms:
+          - care_center_id
+          - clinic_id
+          - facility_code
+          - facility_id
+          - health_center_id
+          - healthcare_facility_id
+          - hospital_code
+          - institution_id
+          - medical_center_id
+          - medical_facility_id
+        description: Identifier for the hospital associated with a patient admission.
+        expr: HOSPITAL_ID
+        data_type: VARCHAR(5)
+        sample_values:
+          - H01
+          - H02
+          - H05
+      - name: LENGTH_OF_STAY
+        synonyms:
+          - admission_length
+          - days_admitted
+          - days_hospitalized
+          - days_in_hospital
+          - duration_of_stay
+          - hospital_stay_duration
+          - hospitalization_duration
+          - inpatient_days
+          - stay_duration
+          - total_stay_days
+        description: The number of days a patient remained admitted during a hospital stay.
+        expr: LENGTH_OF_STAY
+        data_type: NUMBER(4,0)
+        sample_values:
+          - '8'
+          - '14'
+          - '7'
+      - name: PATIENT_ID
+        synonyms:
+          - case_id
+          - client_id
+          - individual_id
+          - member_id
+          - patient_code
+          - patient_identifier
+          - patient_number
+          - patient_reference
+          - person_id
+          - subject_id
+        description: Unique identifier assigned to each patient.
+        expr: PATIENT_ID
+        data_type: NUMBER(10,0)
+        sample_values:
+          - '29235'
+          - '16560'
+          - '28663'
+      - name: READMISSION_FLAG
+        synonyms:
+          - hospital_return_flag
+          - patient_readmit_flag
+          - re_entry_indicator
+          - readmission_marker
+          - readmit_indicator
+          - readmitted_status
+          - rehospitalization_flag
+          - rehospitalization_indicator
+          - repeat_hospitalization_flag
+          - return_admission_marker
+        description: A flag indicating whether a patient was readmitted.
+        expr: READMISSION_FLAG
+        data_type: NUMBER(1,0)
+        sample_values:
+          - '1'
+          - '0'
+    time_dimensions:
+      - name: ADMIT_DATE
+        description: The date on which a patient was admitted.
+        expr: ADMIT_DATE
+        data_type: DATE
+        sample_values:
+          - '2024-09-24'
+          - '2023-12-24'
+          - '2024-07-28'
+    metrics:
+      - name: DISTINCT_ADMISSION_ID
+        description: Calculates the count of unique patient admission records. Use when questions ask about 'how many unique admissions', 'distinct admissions', 'number of unique patients admitted', or 'admission count without duplicates'. Helps accurately measure admission volume when joining across multiple tables that may produce duplicate admission records, and assess the breadth of coverage across departments, insurers, or time periods.
+        expr: COUNT(DISTINCT admission_id)
+        access_modifier: public_access
+      - name: NUM_ADMISSIONS
+        description: Calculates the total count of patient admission records. Use when questions ask about 'how many admissions', 'number of patients admitted', 'admission volume', or 'patient admissions by department or type'. Helps analyze hospital capacity utilization, track admission trends over time, and compare admission volumes across departments, admission types, or time periods.
+        expr: COUNT(admission_id)
+        access_modifier: public_access
+    primary_key:
+      columns:
+        - ADMISSION_ID
+  - name: TREATMENT_RECORDS
+    synonyms:
+      - care_records
+      - clinical_interventions
+      - clinical_treatments
+      - healthcare_procedures
+      - medical_interventions
+      - medical_procedures
+      - patient_treatments
+      - procedure_logs
+      - therapy_records
+      - treatment_history
+    description: The table contains records of medical treatments administered to patients. Each record represents a single treatment and includes details about the associated admission, the treating physician, the procedure performed, and financial and outcome information.
+    base_table:
+      database: HEALTHCARE_DB
+      schema: RAW
+      table: TREATMENT_RECORDS
+    dimensions:
+      - name: ADMISSION_ID
+        synonyms:
+          - admission_reference_id
+          - check_in_id
+          - encounter_id
+          - entry_id
+          - hospital_visit_id
+          - hospitalization_id
+          - intake_id
+          - patient_admission_number
+          - registration_id
+          - visit_id
+        description: Unique identifier assigned to each patient admission record.
+        expr: ADMISSION_ID
+        data_type: NUMBER(10,0)
+        sample_values:
+          - '103951'
+          - '128718'
+          - '149007'
+      - name: DOCTOR_ID
+        synonyms:
+          - attending_physician_id
+          - clinician_id
+          - doc_id
+          - healthcare_provider_id
+          - medical_staff_id
+          - physician_id
+          - practitioner_id
+          - provider_id
+        description: Unique identifier assigned to each doctor.
+        expr: DOCTOR_ID
+        data_type: VARCHAR(5)
+        sample_values:
+          - D088
+          - D161
+          - D017
+      - name: OUTCOME
+        synonyms:
+          - conclusion
+          - end_result
+          - final_status
+          - finding
+          - patient_result
+          - prognosis
+          - resolution
+          - result
+          - treatment_outcome
+          - treatment_result
+        description: The outcome or result of a treatment record.
+        expr: OUTCOME
+        data_type: VARCHAR(1)
+        sample_values:
+          - S
+          - P
+          - F
+      - name: PROCEDURE_CODE
+        synonyms:
+          - clinical_code
+          - clinical_procedure_id
+          - healthcare_procedure_code
+          - intervention_code
+          - medical_procedure_code
+          - medical_service_code
+          - procedure_identifier
+          - procedure_reference
+          - service_code
+          - treatment_code
+        description: Alphanumeric codes identifying medical procedures performed during treatment.
+        expr: PROCEDURE_CODE
+        data_type: VARCHAR(10)
+        sample_values:
+          - P733
+          - P845
+          - P101
+      - name: TREATMENT_ID
+        synonyms:
+          - care_id
+          - intervention_id
+          - medical_procedure_id
+          - procedure_id
+          - therapy_id
+          - treatment_code
+          - treatment_key
+          - treatment_number
+          - treatment_record_id
+          - treatment_reference
+        description: Unique identifier assigned to each treatment record.
+        expr: TREATMENT_ID
+        data_type: NUMBER(10,0)
+        sample_values:
+          - '500001'
+          - '500027'
+          - '500202'
+    time_dimensions:
+      - name: TREATMENT_DATE
+        description: The date on which a treatment was administered.
+        expr: TREATMENT_DATE
+        data_type: DATE
+        sample_values:
+          - '2023-10-25'
+          - '2023-12-26'
+          - '2023-10-31'
+    facts:
+      - name: COST
+        description: The monetary cost associated with a treatment record.
+        expr: COST
+        data_type: NUMBER(12,2)
+        access_modifier: public_access
+        sample_values:
+          - '34843.00'
+          - '70753.00'
+          - '9285.00'
+    metrics:
+      - name: AVG_TREATMENT_COST
+        description: Calculates the average monetary cost per treatment record. Use when questions ask about 'average treatment cost', 'typical cost of treatment', 'mean cost per procedure', or 'average cost across diseases or patients'. Helps benchmark treatment expenses, compare average costs across diagnosis codes, procedures, or outcome types, and identify cost efficiency opportunities in patient care.
+        expr: AVG(cost)
+        access_modifier: public_access
+      - name: END_DATE
+        description: Returns the latest treatment date across the selected treatment records. Use when questions ask about 'last treatment date', 'most recent treatment', 'end of treatment period', or when defining the end of a treatment date range for analysis. Helps establish the end boundary of treatment activity windows for trend analysis or reporting periods.
+        expr: MAX(treatment_date)
+        access_modifier: public_access
+      - name: START_DATE
+        description: Returns the earliest treatment date across the selected treatment records. Use when questions ask about 'first treatment date', 'start of treatment period', 'earliest treatment', or when defining the beginning of a treatment date range for analysis. Helps establish the start boundary of treatment activity windows for trend analysis or reporting periods.
+        expr: MIN(treatment_date)
+        access_modifier: public_access
+      - name: TOTAL_TREATMENT_COST
+        description: Calculates the sum of all treatment costs across treatment records. Use when questions ask about 'total treatment cost', 'overall cost of treatments', 'how much was spent on treatments', or 'treatment cost by outcome or procedure'. Helps evaluate total financial expenditure on patient care, compare costs across outcome types, departments, or time periods, and support budgeting and cost management decisions.
+        expr: SUM(cost)
+        access_modifier: public_access
+relationships:
+  - name: INSURANCE_CLAIMS_TO_PATIENT_ADMISSIONS
+    left_table: INSURANCE_CLAIMS
+    right_table: PATIENT_ADMISSIONS
+    relationship_columns:
+      - left_column: ADMISSION_ID
+        right_column: ADMISSION_ID
+    join_type: inner
+  - name: TREATMENT_RECORDS_TO_PATIENT_ADMISSIONS
+    left_table: TREATMENT_RECORDS
+    right_table: PATIENT_ADMISSIONS
+    relationship_columns:
+      - left_column: ADMISSION_ID
+        right_column: ADMISSION_ID
+    join_type: inner
+verified_queries:
+  - name: '"What is the total claim amount and approved amount by claim status year to date?"'
+    sql: |-
+      SELECT
+        *
+      FROM
+        SEMANTIC_VIEW(
+          HEALTHCARE_DB.GOLD.HEALTHCARE_SEMANTIC_VW METRICS SUM(claim_amount) AS total_claim_amount,
+          SUM(approved_amount) AS total_approved_amount DIMENSIONS claim_status
+          WHERE
+            claim_date >= DATE_TRUNC('YEAR', CURRENT_DATE)
+            AND claim_date <= CURRENT_DATE
+        )
+        /* Generated by Cortex Analyst (request_id: ac8af9b6-3760-452c-8a5e-3ae48cefe203) */
+    question: What is the total claim amount and approved amount by claim status year to date?
+    verified_at: 1783187428
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"How many patient admissions were there by department and admission type in the last month?"'
+    sql: |-
+      SELECT
+        pa.department,
+        pa.admission_type,
+        COUNT(pa.admission_id) AS num_admissions
+      FROM
+        patient_admissions AS pa
+      WHERE
+        pa.admit_date >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1 MONTH')
+        AND pa.admit_date < DATE_TRUNC('MONTH', CURRENT_DATE)
+      GROUP BY
+        pa.department,
+        pa.admission_type
+      ORDER BY
+        num_admissions DESC NULLS LAST
+        /* Generated by Cortex Analyst (request_id: 058b18dc-b012-4e46-9838-74bff076211a) */
+    question: How many patient admissions were there by department and admission type in the last month?
+    verified_at: 1783186777
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"What is the total treatment cost for each outcome type across all treatment records?"'
+    sql: |-
+      SELECT
+        tr.outcome,
+        MIN(tr.treatment_date) AS start_date,
+        MAX(tr.treatment_date) AS end_date,
+        SUM(tr.cost) AS total_treatment_cost
+      FROM
+        treatment_records AS tr
+      GROUP BY
+        tr.outcome
+      ORDER BY
+        total_treatment_cost DESC NULLS LAST
+        /* Generated by Cortex Analyst (request_id: aeb3eff4-ffac-40c1-a79d-f41864f8c7fd) */
+    question: What is the total treatment cost for each outcome type across all treatment records?
+    verified_at: 1783186864
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"what wree the claims made in the third quarter fo 2024"'
+    sql: |-
+      SELECT
+        admission_id,
+        claim_id,
+        claim_status,
+        insurance_id,
+        claim_date,
+        settle_date,
+        approved_amount,
+        claim_amount
+      FROM
+        insurance_claims
+      WHERE
+        claim_date >= '2024-07-01'
+        AND claim_date < '2024-10-01'
+      ORDER BY
+        claim_date DESC NULLS LAST
+        /* Generated by Cortex Analyst (request_id: c6ba416a-9a7f-4e71-a5a0-b5f50e9d64b1) */
+    question: what wree the claims made in the third quarter fo 2024
+    verified_at: 1783187014
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"what is the average cost of tretament across all diseases  across all the patients"'
+    sql: |-
+      SELECT
+        pa.diagnosis_code,
+        MIN(tr.treatment_date) AS start_date,
+        MAX(tr.treatment_date) AS end_date,
+        AVG(tr.cost) AS avg_treatment_cost
+      FROM
+        treatment_records AS tr
+        INNER JOIN patient_admissions AS pa ON tr.admission_id = pa.admission_id
+      GROUP BY
+        pa.diagnosis_code
+      ORDER BY
+        avg_treatment_cost DESC NULLS LAST
+        /* Generated by Cortex Analyst (request_id: 6daecfbc-e26a-4c06-a842-518efd738356) */
+    question: what is the average cost of tretament across all diseases  across all the patients
+    verified_at: 1783187089
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"How many patient admissions were there by department and admission type in the previous calendar month? (Note: ''last month'' is interpreted as the previous calendar month. If you meant the past 30 days, please ask for ''past 30 days'' instead.)"'
+    sql: |-
+      SELECT
+        pa.department,
+        pa.admission_type,
+        COUNT(pa.admission_id) AS num_admissions
+      FROM
+        patient_admissions AS pa
+      WHERE
+        pa.admit_date >= DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1 MONTH')
+        AND pa.admit_date < DATE_TRUNC('MONTH', CURRENT_DATE)
+      GROUP BY
+        pa.department,
+        pa.admission_type
+      ORDER BY
+        num_admissions DESC NULLS LAST
+        /* Generated by Cortex Analyst (request_id: 058b18dc-b012-4e46-9838-74bff076211a) */
+    question: 'How many patient admissions were there by department and admission type in the previous calendar month? (Note: ''last month'' is interpreted as the previous calendar month. If you meant the past 30 days, please ask for ''past 30 days'' instead.)'
+    verified_at: 1783188163
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"What were the claims made in every quarter for the first three calendar years available in the data? Group claims by year and quarter, showing the count of claims and total claim amount for each quarter."'
+    sql: |-
+      WITH quarterly_claims AS (
+        SELECT
+          DATE_TRUNC('QUARTER', claim_date) AS quarter_start,
+          DATE_PART('year', claim_date) AS claim_year,
+          DATE_PART('quarter', claim_date) AS claim_quarter,
+          COUNT(claim_id) AS num_claims,
+          SUM(claim_amount) AS total_claim_amount,
+          SUM(approved_amount) AS total_approved_amount
+        FROM
+          insurance_claims
+        GROUP BY
+          DATE_TRUNC('QUARTER', claim_date),
+          DATE_PART('year', claim_date),
+          DATE_PART('quarter', claim_date)
+      ),
+      min_years AS (
+        SELECT
+          DISTINCT claim_year
+        FROM
+          quarterly_claims
+        ORDER BY
+          claim_year ASC
+        LIMIT
+          3
+      )
+      SELECT
+        qc.quarter_start,
+        qc.claim_year,
+        qc.claim_quarter,
+        qc.num_claims,
+        qc.total_claim_amount,
+        qc.total_approved_amount
+      FROM
+        quarterly_claims AS qc
+        INNER JOIN min_years AS my ON qc.claim_year = my.claim_year
+      ORDER BY
+        qc.quarter_start ASC
+        /* Generated by Cortex Analyst (request_id: ff5f600f-3170-4028-8e7b-3e7c59420c9f) */
+    question: What were the claims made in every quarter for the first three calendar years available in the data? Group claims by year and quarter, showing the count of claims and total claim amount for each quarter.
+    verified_at: 1783188203
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"What is the total approved amount for insurance claims submitted so far in 2026?"'
+    sql: |-
+      SELECT
+        SUM(approved_amount) AS total_approved_amount
+      FROM
+        insurance_claims
+      WHERE
+        claim_date <= CURRENT_DATE
+        AND claim_date >= '2026-01-01'
+    question: What is the total approved amount for insurance claims submitted so far in 2026?
+    verified_at: 1783188210
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
+  - name: '"What were the quarterly claim volumes and amounts during the three earliest years on record?"'
+    sql: |-
+      WITH quarterly_claims AS (
+        SELECT
+          DATE_TRUNC('QUARTER', claim_date) AS quarter_start,
+          DATE_PART('year', claim_date) AS claim_year,
+          DATE_PART('quarter', claim_date) AS claim_quarter,
+          COUNT(claim_id) AS num_claims,
+          SUM(claim_amount) AS total_claim_amount,
+          SUM(approved_amount) AS total_approved_amount
+        FROM
+          insurance_claims
+        GROUP BY
+          DATE_TRUNC('QUARTER', claim_date),
+          DATE_PART('year', claim_date),
+          DATE_PART('quarter', claim_date)
+      ),
+      min_years AS (
+        SELECT
+          DISTINCT claim_year
+        FROM
+          quarterly_claims
+        ORDER BY
+          claim_year ASC
+        LIMIT
+          3
+      )
+      SELECT
+        qc.quarter_start,
+        qc.claim_year,
+        qc.claim_quarter,
+        qc.num_claims,
+        qc.total_claim_amount,
+        qc.total_approved_amount
+      FROM
+        quarterly_claims AS qc
+        INNER JOIN min_years AS my ON my.claim_year = qc.claim_year
+      ORDER BY
+        qc.quarter_start ASC
+    question: What were the quarterly claim volumes and amounts during the three earliest years on record?
+    verified_at: 1783188216
+    verified_by: Priyanka Pandey
+    use_as_onboarding_question: false
